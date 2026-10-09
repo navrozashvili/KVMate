@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
+    <RootNamespace>KVMate.App</RootNamespace>
+    <!-- The binary a user launches is the tool itself, so it is KVMate.exe rather than KVMate.App.exe. -->
+    <AssemblyName>KVMate</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>Assets\TrayIcon.ico</ApplicationIcon>
+  </PropertyGroup>
+
+  <PropertyGroup Label="WinUI 3, unpackaged, self-contained">
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <!-- OutputType=WinExe plus a concrete RuntimeIdentifier is what makes the SDK emit a GUI
+         apphost, so the tray app does not flash a console. -->
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <EnableMsixTooling>false</EnableMsixTooling>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="H.NotifyIcon.WinUI" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\KVMate.Core\KVMate.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="Assets\TrayIcon.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!-- An unpackaged publish leaves out the app's own resource index, which holds the compiled XAML.
+       Without it a published copy crashes inside Microsoft.UI.Xaml before any window appears. -->
+  <Target Name="PublishAppResourceIndex" AfterTargets="ComputeResolvedFilesToPublishList">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(OutDir)$(AssemblyName).pri"
+                             Condition="Exists('$(OutDir)$(AssemblyName).pri')"
+                             RelativePath="$(AssemblyName).pri"
+                             CopyToPublishDirectory="PreserveNewest" />
+    </ItemGroup>
+    <Error Condition="!Exists('$(OutDir)$(AssemblyName).pri')"
+           Text="$(AssemblyName).pri was not produced, so a published copy of the app would crash at startup." />
+  </Target>
+
+</Project>

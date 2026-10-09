@@ -1,0 +1,21 @@
+<Project>
+
+  <PropertyGroup>
+    <!-- Shared metadata. -->
+    <Product>KVMate</Product>
+    <Company>KVMate contributors</Company>
+    <Copyright>Copyright (c) KVMate contributors</Copyright>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <!-- Reproducible builds. -->
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+    <!-- Supply-chain hygiene: committed lock files, restored with the
+         locked-mode flag in CI. (XML comments cannot contain a double hyphen.) -->
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+  </PropertyGroup>
+
+</Project>

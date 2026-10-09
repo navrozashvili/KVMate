@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/KVMate.Core/KVMate.Core.csproj" />
+    <Project Path="src/KVMate.App/KVMate.App.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/KVMate.Core.Tests/KVMate.Core.Tests.csproj" />
+  </Folder>
+</Solution>
