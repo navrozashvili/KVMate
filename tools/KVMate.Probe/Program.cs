@@ -1,4 +1,5 @@
 using KVMate.Core.Devices;
+using KVMate.Core.Power;
 using KVMate.Core.Speakers;
 using KVMate.Probe;
 using Microsoft.Extensions.Logging;
@@ -87,6 +88,11 @@ async Task<int> SendAsync(string speakerId, bool connect)
 async Task<int> WatchAsync(string instanceId)
 {
     using var watcher = new UsbDeviceWatcher(loggerFactory.CreateLogger<UsbDeviceWatcher>());
+    using var power = new PowerEvents(loggerFactory.CreateLogger<PowerEvents>());
+
+    // Resume too, since the app reconciles on wake and sleeping the PC is part of the hardware check.
+    power.Resumed += (_, _) => Console.WriteLine($"{DateTime.Now:HH:mm:ss.fff}  resumed from sleep");
+    power.Start();
 
     watcher.Arrived += (_, _) => Console.WriteLine($"{DateTime.Now:HH:mm:ss.fff}  arrived");
     watcher.Removed += (_, _) => Console.WriteLine($"{DateTime.Now:HH:mm:ss.fff}  removed");
@@ -107,7 +113,7 @@ static int Usage()
           list-speakers               Paired Bluetooth audio devices: id, state and name.
           connect <speaker-id>        Ask the speaker to connect to this PC and report the outcome.
           disconnect <speaker-id>     Ask the speaker to disconnect from this PC and report the outcome.
-          watch <usb-instance-id>     Print arrive and remove events for one USB device until Ctrl+C.
+          watch <usb-instance-id>     Print arrive, remove and resume events for one USB device until Ctrl+C.
 
         Quote instance ids: they contain '&'.
         """);
