@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer pull request push cancels the older run. A push to master never cancels one in progress,
+# because that run may be in the middle of publishing a release.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build and test
+    runs-on: windows-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      # The exact SDK global.json pins (rollForward is disabled there).
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Restore (locked)
+        run: dotnet restore KVMate.slnx --locked-mode
+
+      - name: Build
+        run: dotnet build KVMate.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test KVMate.slnx -c Release --no-build --verbosity normal
+
+      - name: Verify formatting
+        run: dotnet format KVMate.slnx --verify-no-changes --no-restore
+
+  # A GitHub Release for every push to master that passed every gate above. The version is
+  # version.json's major.minor plus this workflow's run number, so it only ever goes up. (The run
+  # number also counts pull request runs, so versions skip numbers; that is harmless.)
+  release:
+    name: Release
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: windows-latest
+    timeout-minutes: 30
+    # The only job that can write: it creates the tag and the release.
+    permissions:
+      contents: write
+    concurrency:
+      group: release
+      cancel-in-progress: false
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RUN_NUMBER: ${{ github.run_number }}
+
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Work out the version
+        id: version
+        shell: pwsh
+        run: |
+          $base = (Get-Content -Raw version.json | ConvertFrom-Json).version
+          if ($base -notmatch '^\d+\.\d+$') {
+            Write-Error "version.json must hold a major.minor version such as 1.0, not '$base'."
+            exit 1
+          }
+          $version = "$base.$env:RUN_NUMBER"
+          gh release view "v$version" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            Write-Error "Release v$version already exists. Re-running a workflow keeps its run number; push a new commit instead."
+            exit 1
+          }
+          Write-Output "Releasing $version."
+          "version=$version" >> $env:GITHUB_OUTPUT
+          # The runner ends a pwsh step with "exit $LASTEXITCODE", which here is gh's "not found".
+          exit 0
+
+      - name: Build the release
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: ./build/release.ps1 -Version $env:VERSION -OutputDirectory artifacts/release
+
+      # gh uploads the zip to a draft and publishes it only once the upload has finished, so a
+      # failed upload never leaves a published release without its file.
+      - name: Publish the release
+        shell: pwsh
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$env:VERSION" `
+            --target $env:GITHUB_SHA `
+            --title "KVMate $env:VERSION" `
+            --generate-notes `
+            --latest `
+            "artifacts/release/KVMate-$env:VERSION-win-x64.zip"
+          if ($LASTEXITCODE -ne 0) { exit 1 }
