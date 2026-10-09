@@ -19,11 +19,14 @@ internal sealed class FakeDeviceWatcher : IDeviceWatcher
 
     public int StartCount { get; private set; }
 
+    /// <summary>When set, starting fails with this, as a broken device stack would.</summary>
+    public Exception? StartFailure { get; set; }
+
     public Task StartAsync(string instanceId, CancellationToken cancellationToken)
     {
         WatchedInstanceId = instanceId;
         StartCount++;
-        return Task.CompletedTask;
+        return StartFailure is null ? Task.CompletedTask : Task.FromException(StartFailure);
     }
 
     public void Stop() => WatchedInstanceId = null;

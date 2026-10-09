@@ -131,7 +131,16 @@ public sealed class HandoffEngine : IDisposable
             return;
         }
 
-        await _watcher.StartAsync(deviceInstanceId, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _watcher.StartAsync(deviceInstanceId, cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            // Without a watcher nothing would ever trigger, so idle is the honest status.
+            SetStatus(HandoffStatus.NotConfigured);
+            throw;
+        }
 
         lock (_gate)
         {

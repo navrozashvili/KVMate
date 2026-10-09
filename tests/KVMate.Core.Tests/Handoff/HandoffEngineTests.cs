@@ -75,6 +75,22 @@ public sealed class HandoffEngineTests : IDisposable
     }
 
     [Fact]
+    public async Task A_watcher_that_cannot_start_leaves_the_engine_idle()
+    {
+        _watcher.IsPresent = true;
+        await ConfigureAsync();
+        _time.Advance(Debounce);
+        _watcher.StartFailure = new InvalidOperationException("no device stack");
+
+        await Assert.ThrowsAsync<InvalidOperationException>(ConfigureAsync);
+        _watcher.Remove();
+        Elapse(TimeSpan.FromSeconds(10));
+
+        Assert.Equal(HandoffStatus.NotConfigured, _engine.Status);
+        Assert.Empty(_speaker.DisconnectCalls);
+    }
+
+    [Fact]
     public void A_new_engine_reads_as_not_configured() =>
         Assert.Equal(HandoffStatus.NotConfigured, _engine.Status);
 
