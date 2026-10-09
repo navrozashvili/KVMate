@@ -1,12 +1,14 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <!-- Windows-versioned TFM so Core can call Windows.Devices.Bluetooth directly. -->
+    <!-- Windows-versioned TFM so Core can call Windows.Devices.Enumeration directly. -->
     <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.17763.0</SupportedOSPlatformVersion>
     <RootNamespace>KVMate.Core</RootNamespace>
     <AssemblyName>KVMate.Core</AssemblyName>
     <Description>KVM switch detection and Bluetooth speaker handoff.</Description>
+    <!-- Source-generated COM interop ([GeneratedComInterface]) and the power callback emit unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

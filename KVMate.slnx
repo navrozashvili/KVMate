@@ -6,4 +6,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/KVMate.Core.Tests/KVMate.Core.Tests.csproj" />
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/KVMate.Probe/KVMate.Probe.csproj" />
+  </Folder>
 </Solution>
