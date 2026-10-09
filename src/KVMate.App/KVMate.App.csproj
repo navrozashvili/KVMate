@@ -10,6 +10,8 @@
     <AssemblyName>KVMate</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>Assets\TrayIcon.ico</ApplicationIcon>
+    <!-- The LibraryImport-generated stub for the settings window's GetDpiForWindow call is unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup Label="WinUI 3, unpackaged, self-contained">
@@ -21,6 +23,10 @@
          apphost, so the tray app does not flash a console. -->
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <EnableMsixTooling>false</EnableMsixTooling>
+    <!-- The single-instance guard has to run before the XAML runtime starts, because a second copy
+         must exit without ever creating an Application. The generated entry point calls
+         Application.Start immediately, so Program.cs replaces it. -->
+    <DefineConstants>$(DefineConstants);DISABLE_XAML_GENERATED_MAIN</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
